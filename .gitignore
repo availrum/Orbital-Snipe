@@ -1,0 +1,32 @@
+# Unreal Engine generated files
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Visual Studio
+.vs/
+obj/
+*.sln
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.userprefs
+
+# Build / temporary files
+*.opensdf
+*.sdf
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Unreal sample/personal content
+Content/StarterContent/
+Content/Developers/
+Content/Collections/
