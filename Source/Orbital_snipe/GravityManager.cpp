@@ -39,61 +39,121 @@ void AGravityManager::Tick(float DeltaTime)
 // 4. 물리 연산 핵심 로직
 void AGravityManager::ApplyGravity(float dt)
 {
-    // 1. [중력 단계] 모든 행성 간의 중력 가속도 계산 (속도만 변경)
+    // ============================================================
+    // 1. 중력 계산
+    // Projectile만 중력 영향을 받는다.
+    // 아직 맞지 않은 Target만 고정된 중력원으로 사용한다.
+    // ============================================================
     for (int32 i = 0; i < AllBodies.Num(); i++)
     {
         AGravityBody* BodyA = AllBodies[i];
+
+        if (!IsValid(BodyA))
+            continue;
+
+        // Target은 중력 때문에 스스로 움직이지 않는다.
+        if (BodyA->BodyType != EGravityBodyType::Projectile)
+            continue;
+
         FVector TotalForce = FVector::ZeroVector;
 
         for (int32 j = 0; j < AllBodies.Num(); j++)
         {
-            if (i == j) continue;
+            if (i == j)
+                continue;
+
             AGravityBody* BodyB = AllBodies[j];
 
-            FVector Direction = BodyB->GetActorLocation() - BodyA->GetActorLocation();
+            if (!IsValid(BodyB))
+                continue;
+
+            // 중력원은 아직 맞지 않은 Target만 사용
+            if (BodyB->BodyType != EGravityBodyType::Target)
+                continue;
+
+            if (BodyB->bHasBeenHit)
+                continue;
+
+            FVector Direction =
+                BodyB->GetActorLocation() -
+                BodyA->GetActorLocation();
+
             float Distance = Direction.Size();
 
-            // 너무 가까우면 중력 계산 스킵 (발산 방지)
-            if (Distance < (BodyA->Radius + BodyB->Radius)) continue;
+            // 이미 충돌할 정도로 가까우면 중력 계산 생략
+            if (Distance < (BodyA->Radius + BodyB->Radius))
+                continue;
 
-            // F = G * m1 * m2 / r^2
-            float ForceMagnitude = GravitationalConstant * (BodyA->Mass * BodyB->Mass) / (Distance * Distance);
-            TotalForce += Direction.GetSafeNormal() * ForceMagnitude;
+            float ForceMagnitude =
+                GravitationalConstant *
+                (BodyA->Mass * BodyB->Mass) /
+                (Distance * Distance);
+
+            TotalForce +=
+                Direction.GetSafeNormal() * ForceMagnitude;
         }
 
-        FVector Acceleration = TotalForce / BodyA->Mass;
-        BodyA->InitialVelocity += Acceleration * dt;
+        FVector Acceleration =
+            TotalForce / BodyA->Mass;
+
+        BodyA->InitialVelocity +=
+            Acceleration * dt;
     }
 
- // [2] 위치 업데이트 및 궤적 그리기 (중심점 기준 수정 버전)
+
+    // ============================================================
+    // 2. 위치 업데이트
+    //
+    // Projectile은 항상 이동
+    // Target은 한 번 맞은 뒤에만 이동
+    // ============================================================
     for (AGravityBody* Body : AllBodies)
     {
-        // 1. 이동하기 전의 "진짜 중심(Center)" 좌표를 가져옴
-        // (Bounds.Origin은 피벗 상관없이 무조건 도형의 정중앙을 줍니다)
-        FVector OldCenter = Body->MeshComponent->Bounds.Origin;
+        if (!IsValid(Body))
+            continue;
 
-        // 2. 위치 이동 (피벗 기준 이동)
-        FVector NewActorPos = Body->GetActorLocation() + (Body->InitialVelocity * dt);
+        const bool bShouldMove =
+            Body->BodyType == EGravityBodyType::Projectile ||
+            Body->bHasBeenHit;
+
+        if (!bShouldMove)
+            continue;
+
+        FVector OldCenter =
+            Body->MeshComponent->Bounds.Origin;
+
+        FVector NewActorPos =
+            Body->GetActorLocation() +
+            (Body->InitialVelocity * dt);
+
         Body->SetActorLocation(NewActorPos);
 
-        // [중요] 위치를 옮겼으니, 메쉬의 중심점 정보(Bounds)도 강제로 새로고침 해줘야 함
         Body->MeshComponent->UpdateBounds();
 
-        // 3. 이동한 후의 "진짜 중심(Center)" 좌표 가져옴
-        FVector NewCenter = Body->MeshComponent->Bounds.Origin;
+        FVector NewCenter =
+            Body->MeshComponent->Bounds.Origin;
 
-        // 4. 이제 중심에서 중심으로 선을 긋습니다
         DrawDebugLine(
             GetWorld(),
-            OldCenter,   // 이전 중심
-            NewCenter,   // 현재 중심
+            OldCenter,
+            NewCenter,
             FColor::Red,
-            false, 5.0f, 0, 2.0f
+            false,
+            5.0f,
+            0,
+            2.0f
         );
     }
 
-    // 3. [충돌 단계] 운동량 보존 법칙 적용 (Elastic Collision)
-    // 이중 루프를 돌되, 중복 검사(A-B, B-A)를 피하기 위해 j = i + 1 부터 시작
+
+    // ============================================================
+    // 3. 충돌
+    //
+    // Projectile → Target
+    // Hit Target → Target
+    //
+    // 맞은 Target은 활성화되어 이후부터 움직인다.
+    // ============================================================
     for (int32 i = 0; i < AllBodies.Num(); i++)
     {
         for (int32 j = i + 1; j < AllBodies.Num(); j++)
@@ -101,49 +161,117 @@ void AGravityManager::ApplyGravity(float dt)
             AGravityBody* BodyA = AllBodies[i];
             AGravityBody* BodyB = AllBodies[j];
 
+            if (!IsValid(BodyA) || !IsValid(BodyB))
+                continue;
+
+            const bool bAMovable =
+                BodyA->BodyType == EGravityBodyType::Projectile ||
+                BodyA->bHasBeenHit;
+
+            const bool bBMovable =
+                BodyB->BodyType == EGravityBodyType::Projectile ||
+                BodyB->bHasBeenHit;
+
+            // 둘 다 아직 움직이지 않는 Target이면
+            // 서로 충돌 계산할 필요 없음
+            if (!bAMovable && !bBMovable)
+                continue;
+
             FVector PosA = BodyA->GetActorLocation();
             FVector PosB = BodyB->GetActorLocation();
-            FVector Normal = PosA - PosB; // 충돌 면의 법선 벡터
-            float Distance = Normal.Size();
-            float MinDist = BodyA->Radius + BodyB->Radius;
 
-            // 충돌 감지
+            FVector Normal = PosA - PosB;
+
+            float Distance = Normal.Size();
+            float MinDist =
+                BodyA->Radius + BodyB->Radius;
+
             if (Distance < MinDist)
             {
+                // 중심이 완전히 같은 특수 상황 방지
+                if (Distance <= KINDA_SMALL_NUMBER)
+                    continue;
+
                 Normal.Normalize();
 
-                // (1) 위치 보정 (겹친 만큼 서로 밀어내기 - 질량 반비례)
-                float Overlap = MinDist - Distance;
-                float TotalMass = BodyA->Mass + BodyB->Mass;
+                FVector RelVel =
+                    BodyA->InitialVelocity -
+                    BodyB->InitialVelocity;
 
-                // 무거운 놈은 조금 밀리고, 가벼운 놈은 많이 밀림
-                float MoveA = Overlap * (BodyB->Mass / TotalMass);
-                float MoveB = Overlap * (BodyA->Mass / TotalMass);
+                float VelAlongNormal =
+                    FVector::DotProduct(RelVel, Normal);
 
-                BodyA->SetActorLocation(PosA + Normal * MoveA);
-                BodyB->SetActorLocation(PosB - Normal * MoveB);
+                // 이미 서로 멀어지는 중
+                if (VelAlongNormal > 0.0f)
+                    continue;
 
-                // (2) 속도 반응 (운동량 보존 법칙 공식)
-                // 상대 속도 계산
-                FVector RelVel = BodyA->InitialVelocity - BodyB->InitialVelocity;
-                float VelAlongNormal = FVector::DotProduct(RelVel, Normal);
 
-                // 이미 멀어지고 있는 중이면 계산 안 함
-                if (VelAlongNormal > 0) continue;
+                // ----------------------------------------
+                // 위치 보정
+                // ----------------------------------------
+                float Overlap =
+                    MinDist - Distance;
 
-                // 반발 계수 (1.0 = 완전 탄성 충돌, 탱탱볼 / 0.5 = 약간의 에너지 손실)
+                float TotalMass =
+                    BodyA->Mass + BodyB->Mass;
+
+                float MoveA =
+                    Overlap *
+                    (BodyB->Mass / TotalMass);
+
+                float MoveB =
+                    Overlap *
+                    (BodyA->Mass / TotalMass);
+
+                BodyA->SetActorLocation(
+                    PosA + Normal * MoveA
+                );
+
+                BodyB->SetActorLocation(
+                    PosB - Normal * MoveB
+                );
+
+
+                // ----------------------------------------
+                // 탄성 충돌
+                // ----------------------------------------
                 float Restitution = 1.0f;
 
-                // 충격량(Impulse) 스칼라 계산
-                float j_impulse = -(1 + Restitution) * VelAlongNormal;
-                j_impulse /= (1 / BodyA->Mass + 1 / BodyB->Mass);
+                float j_impulse =
+                    -(1.0f + Restitution) *
+                    VelAlongNormal;
 
-                // 충격량 벡터
-                FVector Impulse = j_impulse * Normal;
+                j_impulse /=
+                    (1.0f / BodyA->Mass +
+                        1.0f / BodyB->Mass);
 
-                // 속도에 적용
-                BodyA->InitialVelocity += Impulse / BodyA->Mass;
-                BodyB->InitialVelocity -= Impulse / BodyB->Mass;
+                FVector Impulse =
+                    j_impulse * Normal;
+
+                BodyA->InitialVelocity +=
+                    Impulse / BodyA->Mass;
+
+                BodyB->InitialVelocity -=
+                    Impulse / BodyB->Mass;
+
+
+                // ----------------------------------------
+                // Target 활성화
+                //
+                // 움직이던 물체가 Target을 치면
+                // 그 Target도 이후부터 움직일 수 있다.
+                // ----------------------------------------
+                if (BodyA->BodyType == EGravityBodyType::Target &&
+                    bBMovable)
+                {
+                    BodyA->bHasBeenHit = true;
+                }
+
+                if (BodyB->BodyType == EGravityBodyType::Target &&
+                    bAMovable)
+                {
+                    BodyB->bHasBeenHit = true;
+                }
             }
         }
     }

@@ -4,6 +4,13 @@
 #include "GameFramework/Actor.h"
 #include "GravityBody.generated.h"
 
+UENUM(BlueprintType)
+enum class EGravityBodyType : uint8
+{
+	Target      UMETA(DisplayName = "Target"),
+	Projectile  UMETA(DisplayName = "Projectile")
+};
+
 UCLASS()
 class ORBITAL_SNIPE_API AGravityBody : public AActor
 {
@@ -16,6 +23,12 @@ protected:
 	virtual void BeginPlay() override; // 이 줄이 하나만 있어야 합니다!
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
+	EGravityBodyType BodyType = EGravityBodyType::Target;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	bool bHasBeenHit = false;
+	
 	// 질량
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
 	float Mass = 1000.0f;

@@ -120,12 +120,31 @@ void AOrbitalCannon::DrawTrajectory()
 			AGravityBody* Planet = Cast<AGravityBody>(P);
 			if (!Planet) continue;
 
-			FVector Dir = Planet->GetActorLocation() - CurrentPos;
-			float DistSq = Dir.SizeSquared();
-			if (DistSq < FMath::Square(Planet->Radius)) break; // 충돌 시 중단
 
-			float Force = CachedManager->GravitationalConstant * Planet->Mass / DistSq;
-			TotalForce += Dir.GetSafeNormal() * Force;
+			// Projectile은 중력원이 아니다.
+			if (Planet->BodyType != EGravityBodyType::Target)
+				continue;
+
+			FVector Dir =
+				Planet->GetActorLocation() - CurrentPos;
+
+			float DistSq = Dir.SizeSquared();
+
+			if (DistSq < FMath::Square(Planet->Radius))
+				break;
+
+			// 이미 맞아서 움직이기 시작한 Target은
+			// 더 이상 고정 중력원으로 사용하지 않는다.
+			if (Planet->bHasBeenHit)
+				continue;
+
+			float Force =
+				CachedManager->GravitationalConstant *
+				Planet->Mass /
+				DistSq;
+
+			TotalForce +=
+				Dir.GetSafeNormal() * Force;
 		}
 
 		CurrentVel += TotalForce * StepTime;
@@ -152,6 +171,7 @@ void AOrbitalCannon::Fire()
 		AGravityBody* NewPlanet = GetWorld()->SpawnActor<AGravityBody>(PlanetClass, SpawnLoc, SpawnRot, P);
 		if (NewPlanet)
 		{
+			NewPlanet->BodyType = EGravityBodyType::Projectile;
 			NewPlanet->InitialVelocity = -BarrelMesh->GetRightVector() * CurrentPower;
 			if (CachedManager) CachedManager->AddPlanet(NewPlanet);
 		}
