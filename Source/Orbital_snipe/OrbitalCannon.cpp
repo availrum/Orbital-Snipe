@@ -32,11 +32,13 @@ void AOrbitalCannon::BeginPlay()
 	Super::BeginPlay();
 
 	// 매니저 찾아두기
-	AActor* ManagerActor = UGameplayStatics::GetActorOfClass(GetWorld(), AGravityManager::StaticClass());
-	CachedManager = Cast<AGravityManager>(ManagerActor);
+	AActor* ManagerActor =
+		UGameplayStatics::GetActorOfClass(
+			GetWorld(),
+			AGravityManager::StaticClass()
+		);
 
-	// 시각적 모델이 없으면 심심하니까 코드에서 강제로 기본 도형 할당 (편의상)
-	// (실제 개발에선 에디터에서 넣어주는 게 정석입니다)
+	CachedManager = Cast<AGravityManager>(ManagerActor);
 }
 
 void AOrbitalCannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -55,9 +57,13 @@ void AOrbitalCannon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// 1. 회전 적용 (현재 변수 값대로 메쉬를 돌림)
-	BaseMesh->SetRelativeRotation(FRotator(CurrentPitch, CurrentYaw, 0));       // Yaw: Z축 회전
-	BarrelMesh->SetRelativeRotation(FRotator::ZeroRotator);   // Pitch: Y축 회전
+	BaseMesh->SetRelativeRotation(
+		FRotator(0.0f, CurrentYaw, 0.0f)
+	);
 
+	BarrelMesh->SetRelativeRotation(
+		FRotator(0.0f, 0.0f, CurrentPitch)
+	);
 	// 2. 궤적 그리기 (탑승 여부와 상관없이 항상 그림!)
 	DrawTrajectory();
 }
@@ -94,7 +100,7 @@ void AOrbitalCannon::DrawTrajectory()
 	// 시작점: 포구 끝
 	FVector StartPos = ProjectileSpawnPoint->GetComponentLocation();
 	// 발사 방향: 포구의 전방 벡터
-	FVector LaunchDir = ProjectileSpawnPoint->GetForwardVector();
+	FVector LaunchDir = -BarrelMesh->GetRightVector();
 
 	FVector CurrentPos = StartPos;
 	FVector CurrentVel = LaunchDir * CurrentPower;
@@ -146,7 +152,7 @@ void AOrbitalCannon::Fire()
 		AGravityBody* NewPlanet = GetWorld()->SpawnActor<AGravityBody>(PlanetClass, SpawnLoc, SpawnRot, P);
 		if (NewPlanet)
 		{
-			NewPlanet->InitialVelocity = ProjectileSpawnPoint->GetForwardVector() * CurrentPower;
+			NewPlanet->InitialVelocity = -BarrelMesh->GetRightVector() * CurrentPower;
 			if (CachedManager) CachedManager->AddPlanet(NewPlanet);
 		}
 	}
