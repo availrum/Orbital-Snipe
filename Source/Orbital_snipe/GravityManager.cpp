@@ -44,6 +44,14 @@ void AGravityManager::ApplyGravity(float dt)
     // Projectile만 중력 영향을 받는다.
     // 아직 맞지 않은 Target만 고정된 중력원으로 사용한다.
     // ============================================================
+    for (AGravityBody* Body : AllBodies)
+    {
+        if (!IsValid(Body))
+            continue;
+
+        Body->bWasHitBeforeThisFrame = Body->bHasBeenHit;
+    }
+
     for (int32 i = 0; i < AllBodies.Num(); i++)
     {
         AGravityBody* BodyA = AllBodies[i];
@@ -133,16 +141,16 @@ void AGravityManager::ApplyGravity(float dt)
         FVector NewCenter =
             Body->MeshComponent->Bounds.Origin;
 
-        DrawDebugLine(
-            GetWorld(),
-            OldCenter,
-            NewCenter,
-            FColor::Red,
-            false,
-            5.0f,
-            0,
-            2.0f
-        );
+        //DrawDebugLine(
+        //    GetWorld(),
+        //    OldCenter,
+        //    NewCenter,
+        //    FColor::Red,
+        //    false,
+        //    2.0f,
+        //    0,
+        //    2.0f
+        //);
     }
 
 
@@ -164,17 +172,17 @@ void AGravityManager::ApplyGravity(float dt)
             if (!IsValid(BodyA) || !IsValid(BodyB))
                 continue;
 
-            const bool bAMovable =
+            const bool bAWasMovable =
                 BodyA->BodyType == EGravityBodyType::Projectile ||
-                BodyA->bHasBeenHit;
+                BodyA->bWasHitBeforeThisFrame;
 
-            const bool bBMovable =
+            const bool bBWasMovable =
                 BodyB->BodyType == EGravityBodyType::Projectile ||
-                BodyB->bHasBeenHit;
+                BodyB->bWasHitBeforeThisFrame;
 
             // 둘 다 아직 움직이지 않는 Target이면
             // 서로 충돌 계산할 필요 없음
-            if (!bAMovable && !bBMovable)
+            if (!bAWasMovable && !bBWasMovable)
                 continue;
 
             FVector PosA = BodyA->GetActorLocation();
@@ -262,15 +270,19 @@ void AGravityManager::ApplyGravity(float dt)
                 // 그 Target도 이후부터 움직일 수 있다.
                 // ----------------------------------------
                 if (BodyA->BodyType == EGravityBodyType::Target &&
-                    bBMovable)
+                    bBWasMovable &&
+                    !BodyA->bHasBeenHit)
                 {
                     BodyA->bHasBeenHit = true;
+                    BodyA->SetLifeSpan(20.0f);
                 }
 
                 if (BodyB->BodyType == EGravityBodyType::Target &&
-                    bAMovable)
+                    bAWasMovable &&
+                    !BodyB->bHasBeenHit)
                 {
                     BodyB->bHasBeenHit = true;
+                    BodyB->SetLifeSpan(20.0f);
                 }
             }
         }

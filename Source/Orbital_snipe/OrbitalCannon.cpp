@@ -114,6 +114,7 @@ void AOrbitalCannon::DrawTrajectory()
 	for (int32 i = 0; i < MaxSteps; i++)
 	{
 		FVector TotalForce = FVector::ZeroVector;
+		bool bHitTarget = false;
 
 		for (AActor* P : Planets)
 		{
@@ -131,7 +132,10 @@ void AOrbitalCannon::DrawTrajectory()
 			float DistSq = Dir.SizeSquared();
 
 			if (DistSq < FMath::Square(Planet->Radius))
+			{
+				bHitTarget = true;
 				break;
+			}
 
 			// 이미 맞아서 움직이기 시작한 Target은
 			// 더 이상 고정 중력원으로 사용하지 않는다.
@@ -146,6 +150,7 @@ void AOrbitalCannon::DrawTrajectory()
 			TotalForce +=
 				Dir.GetSafeNormal() * Force;
 		}
+		if (bHitTarget) break;
 
 		CurrentVel += TotalForce * StepTime;
 		FVector NextPos = CurrentPos + (CurrentVel * StepTime);

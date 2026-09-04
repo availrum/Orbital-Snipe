@@ -28,7 +28,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
 	bool bHasBeenHit = false;
-	
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	bool bWasHitBeforeThisFrame = false;
+
 	// Áú·®
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
 	float Mass = 1000.0f;
