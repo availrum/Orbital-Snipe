@@ -48,6 +48,12 @@ void AGravityManager::Tick(float DeltaTime)
 
     ApplyGravity(DeltaTime * TimeScale);
 
+    // 모든 Target을 최초 1회 이상 맞히면 Stage Clear
+    if (!bStageCleared && RemainingTargets == 0)
+    {
+        bStageCleared = true;
+    }
+
     if (GEngine)
     {
         GEngine->AddOnScreenDebugMessage(
@@ -63,6 +69,16 @@ void AGravityManager::Tick(float DeltaTime)
             FColor::Green,
             FString::Printf(TEXT("Targets: %d"), RemainingTargets)
         );
+
+        if (bStageCleared)
+        {
+            GEngine->AddOnScreenDebugMessage(
+                4,
+                0.0f,
+                FColor::Cyan,
+                TEXT("STAGE CLEAR!")
+            );
+        }
     }
 }
 
