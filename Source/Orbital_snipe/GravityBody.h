@@ -32,6 +32,12 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
 	bool bWasHitBeforeThisFrame = false;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	int32 ChainDepth = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	int32 ShotId = -1;
+
 	// Áú·®
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Physics")
 	float Mass = 1000.0f;

@@ -2,6 +2,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h" // 궤적 그리기용
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 // 1. 생성자 (Constructor) - 이게 없어서 에러 났었음
 AGravityManager::AGravityManager()
@@ -28,12 +29,22 @@ void AGravityManager::BeginPlay()
 }
 
 // 3. 매 프레임 실행 (Tick) - 이것도 없어서 에러 났었음
+
 void AGravityManager::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    // 배속 적용해서 물리 계산 실행
     ApplyGravity(DeltaTime * TimeScale);
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(
+            1,
+            0.0f,
+            FColor::Yellow,
+            FString::Printf(TEXT("Score: %d"), TotalScore)
+        );
+    }
 }
 
 // 4. 물리 연산 핵심 로직
@@ -274,7 +285,13 @@ void AGravityManager::ApplyGravity(float dt)
                     !BodyA->bHasBeenHit)
                 {
                     BodyA->bHasBeenHit = true;
-                    BodyA->SetLifeSpan(20.0f);
+
+                    BodyA->ShotId = BodyB->ShotId;
+                    BodyA->ChainDepth = BodyB->ChainDepth + 1;
+
+                    TotalScore += 100 * BodyA->ChainDepth;
+
+                    BodyA->SetLifeSpan(30.0f);
                 }
 
                 if (BodyB->BodyType == EGravityBodyType::Target &&
@@ -282,15 +299,29 @@ void AGravityManager::ApplyGravity(float dt)
                     !BodyB->bHasBeenHit)
                 {
                     BodyB->bHasBeenHit = true;
-                    BodyB->SetLifeSpan(20.0f);
+
+                    BodyB->ShotId = BodyA->ShotId;
+                    BodyB->ChainDepth = BodyA->ChainDepth + 1;
+
+                    TotalScore += 100 * BodyB->ChainDepth;
+
+                    BodyB->SetLifeSpan(30.0f);
                 }
+
             }
         }
     }
 }
 void AGravityManager::AddPlanet(AGravityBody* NewPlanet)
 {
-    if (NewPlanet){
-        AllBodies.Add(NewPlanet);
+    if (!NewPlanet)
+        return;
+
+    if (NewPlanet->BodyType == EGravityBodyType::Projectile)
+    {
+        NewPlanet->ShotId = NextShotId++;
+        NewPlanet->ChainDepth = 0;
     }
+
+    AllBodies.Add(NewPlanet);
 }

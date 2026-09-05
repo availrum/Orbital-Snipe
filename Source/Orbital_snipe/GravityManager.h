@@ -12,6 +12,8 @@ class ORBITAL_SNIPE_API AGravityManager : public AActor
 
 public:
 	AGravityManager();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	int32 TotalScore = 0;
 
 protected:
 	virtual void BeginPlay() override;
@@ -30,6 +32,8 @@ public:
 private:
 	// 월드에 있는 모든 행성 리스트
 	TArray<AGravityBody*> AllBodies;
+
+	int32 NextShotId = 1;
 
 	// 중력 계산 함수
 	void ApplyGravity(float DeltaTime);

@@ -5,6 +5,7 @@
 #include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/Engine.h"
 
 AOrbitalCannon::AOrbitalCannon()
 {
@@ -39,6 +40,7 @@ void AOrbitalCannon::BeginPlay()
 		);
 
 	CachedManager = Cast<AGravityManager>(ManagerActor);
+	RemainingShots = MaxShots;
 }
 
 void AOrbitalCannon::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -66,6 +68,19 @@ void AOrbitalCannon::Tick(float DeltaTime)
 	);
 	// 2. 궤적 그리기 (탑승 여부와 상관없이 항상 그림!)
 	DrawTrajectory();
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			2,
+			0.0f,
+			FColor::White,
+			FString::Printf(
+				TEXT("Shots: %d / %d"),
+				RemainingShots,
+				MaxShots
+			)
+		);
+	}
 }
 
 void AOrbitalCannon::RotateCannon(float Val)
@@ -165,6 +180,9 @@ void AOrbitalCannon::DrawTrajectory()
 
 void AOrbitalCannon::Fire()
 {
+	if (RemainingShots <= 0)
+		return;
+
 	if (PlanetClass)
 	{
 		FVector SpawnLoc = ProjectileSpawnPoint->GetComponentLocation();
@@ -178,7 +196,11 @@ void AOrbitalCannon::Fire()
 		{
 			NewPlanet->BodyType = EGravityBodyType::Projectile;
 			NewPlanet->InitialVelocity = -BarrelMesh->GetRightVector() * CurrentPower;
-			if (CachedManager) CachedManager->AddPlanet(NewPlanet);
+
+			if (CachedManager)
+				CachedManager->AddPlanet(NewPlanet);
+
+			RemainingShots--;
 		}
 	}
 }

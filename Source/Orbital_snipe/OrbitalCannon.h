@@ -40,6 +40,12 @@ public:
 	float CurrentPitch = 45.0f; // 초기 45도 각도
 	float CurrentPower = 2000.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	int32 MaxShots = 5;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
+	int32 RemainingShots = 5;
+
 	// [입력 함수]
 	void RotateCannon(float Val); // 좌우 (A/D)
 	void ElevateCannon(float Val); // 상하 (W/S)
