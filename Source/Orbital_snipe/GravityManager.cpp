@@ -26,6 +26,18 @@ void AGravityManager::BeginPlay()
             AllBodies.Add(Body);
         }
     }
+    for (AGravityBody* Body : AllBodies)
+    {
+        if (!IsValid(Body))
+            continue;
+
+        if (Body->BodyType == EGravityBodyType::Target &&
+            !Body->bHasBeenHit)
+        {
+            RemainingTargets++;
+        }
+    }
+
 }
 
 // 3. 매 프레임 실행 (Tick) - 이것도 없어서 에러 났었음
@@ -43,6 +55,13 @@ void AGravityManager::Tick(float DeltaTime)
             0.0f,
             FColor::Yellow,
             FString::Printf(TEXT("Score: %d"), TotalScore)
+        );
+
+        GEngine->AddOnScreenDebugMessage(
+            3,
+            0.0f,
+            FColor::Green,
+            FString::Printf(TEXT("Targets: %d"), RemainingTargets)
         );
     }
 }
@@ -285,6 +304,7 @@ void AGravityManager::ApplyGravity(float dt)
                     !BodyA->bHasBeenHit)
                 {
                     BodyA->bHasBeenHit = true;
+                    RemainingTargets = FMath::Max(0, RemainingTargets - 1);
 
                     BodyA->ShotId = BodyB->ShotId;
                     BodyA->ChainDepth = BodyB->ChainDepth + 1;
@@ -299,6 +319,7 @@ void AGravityManager::ApplyGravity(float dt)
                     !BodyB->bHasBeenHit)
                 {
                     BodyB->bHasBeenHit = true;
+                    RemainingTargets = FMath::Max(0, RemainingTargets - 1);
 
                     BodyB->ShotId = BodyA->ShotId;
                     BodyB->ChainDepth = BodyA->ChainDepth + 1;

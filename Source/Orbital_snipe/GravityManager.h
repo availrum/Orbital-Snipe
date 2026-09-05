@@ -14,6 +14,7 @@ public:
 	AGravityManager();
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay")
 	int32 TotalScore = 0;
+	int32 RemainingTargets = 0;
 
 protected:
 	virtual void BeginPlay() override;
