@@ -17,8 +17,11 @@ public:
 	virtual void SetupInputComponent() override;
 
 protected:
-	// 상호작용 (대포 타기/내리기)
+	// F : 대포 타기 / 내리기
 	void Interact();
+
+	// Home : 게임 결과가 나온 뒤에만 재시작
+	void RetryStage();
 
 	UPROPERTY()
 	TObjectPtr<APawn> StoredPlayerPawn = nullptr;

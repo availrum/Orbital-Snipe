@@ -184,6 +184,12 @@ void AOrbitalCannon::DrawTrajectory()
 	if (!CachedManager)
 		return;
 
+	if (!CachedManager->bStageInitialized)
+		return;
+
+	if (CachedManager->IsStageFinished())
+		return;
+
 	// 시작점: 포구 끝
 	FVector StartPos =
 		ProjectileSpawnPoint
@@ -313,6 +319,18 @@ void AOrbitalCannon::DrawTrajectory()
 
 void AOrbitalCannon::Fire()
 {
+	if (!CachedManager ||
+		!CachedManager->bStageInitialized)
+	{
+		return;
+	}
+
+	// CLEAR / FAILED 이후에는 Home Retry 전까지 발사 금지
+	if (CachedManager->IsStageFinished())
+	{
+		return;
+	}
+
 	if (RemainingShots <= 0)
 		return;
 
