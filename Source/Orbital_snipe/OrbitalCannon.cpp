@@ -123,19 +123,19 @@ void AOrbitalCannon::Tick(float DeltaTime)
 
 	DrawTrajectory();
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			2,
-			0.0f,
-			FColor::White,
-			FString::Printf(
-				TEXT("Shots: %d / %d"),
-				RemainingShots,
-				MaxShots
-			)
-		);
-	}
+	//if (GEngine)
+	//{
+	//	GEngine->AddOnScreenDebugMessage(
+	//		2,
+	//		0.0f,
+	//		FColor::White,
+	//		FString::Printf(
+	//			TEXT("Shots: %d / %d"),
+	//			RemainingShots,
+	//			MaxShots
+	//		)
+	//	);
+	//}
 }
 
 void AOrbitalCannon::RotateCannon(

@@ -64,7 +64,6 @@ void AGravityManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-
 	// ------------------------------------------------------------
 	// 1. 물리 계산
 	// ------------------------------------------------------------
@@ -73,7 +72,6 @@ void AGravityManager::Tick(float DeltaTime)
 		DeltaTime * TimeScale
 	);
 
-
 	// ------------------------------------------------------------
 	// 2. 활성 물체의 활동시간 / 범위 검사
 	// ------------------------------------------------------------
@@ -81,7 +79,6 @@ void AGravityManager::Tick(float DeltaTime)
 	UpdateActiveBodies(
 		DeltaTime
 	);
-
 
 	// ------------------------------------------------------------
 	// 3. Stage Clear
@@ -93,7 +90,6 @@ void AGravityManager::Tick(float DeltaTime)
 		bStageCleared = true;
 		bStageFailed = false;
 	}
-
 
 	// ------------------------------------------------------------
 	// 4. Stage Failed
@@ -110,54 +106,6 @@ void AGravityManager::Tick(float DeltaTime)
 		!HasActiveChainObjects())
 	{
 		bStageFailed = true;
-	}
-
-
-	// ------------------------------------------------------------
-	// 5. 임시 Debug UI
-	// ------------------------------------------------------------
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(
-			1,
-			0.0f,
-			FColor::Yellow,
-			FString::Printf(
-				TEXT("Score: %d"),
-				TotalScore
-			)
-		);
-
-		GEngine->AddOnScreenDebugMessage(
-			3,
-			0.0f,
-			FColor::Green,
-			FString::Printf(
-				TEXT("Targets: %d"),
-				RemainingTargets
-			)
-		);
-
-
-		if (bStageCleared)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				4,
-				0.0f,
-				FColor::Cyan,
-				TEXT("STAGE CLEAR!")
-			);
-		}
-		else if (bStageFailed)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				4,
-				0.0f,
-				FColor::Red,
-				TEXT("STAGE FAILED!")
-			);
-		}
 	}
 }
 
