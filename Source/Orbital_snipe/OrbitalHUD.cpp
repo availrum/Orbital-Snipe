@@ -7,6 +7,7 @@
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "CanvasItem.h"
+#include "GameFramework/PlayerController.h"
 
 
 AOrbitalHUD::AOrbitalHUD()
@@ -118,7 +119,6 @@ void AOrbitalHUD::DrawHUD()
 		ScreenScale;
 
 
-	// 반투명 검은 배경
 	DrawRect(
 		FLinearColor(
 			0.0f,
@@ -271,20 +271,321 @@ void AOrbitalHUD::DrawHUD()
 	}
 
 
-	// ============================================================
-	// 결과 판정이 아직 없으면
-	// Status HUD만 그리고 종료
-	// ============================================================
-
+	// GravityManager가 없으면 여기서 종료
 	if (!IsValid(GravityManager))
 	{
 		return;
 	}
 
 
+	// ============================================================
+	// 게임 진행 중 조작 안내
+	// ============================================================
+
 	if (!GravityManager->bStageCleared &&
 		!GravityManager->bStageFailed)
 	{
+		bool bIsControllingCannon =
+			false;
+
+
+		if (IsValid(PlayerOwner))
+		{
+			APawn* ControlledPawn =
+				PlayerOwner->GetPawn();
+
+
+			if (Cast<AOrbitalCannon>(ControlledPawn))
+			{
+				bIsControllingCannon =
+					true;
+			}
+		}
+
+
+		// ========================================================
+		// Control Panel 위치
+		// ========================================================
+
+		const float ControlPanelWidth =
+			360.0f *
+			ScreenScale;
+
+
+		const float ControlPanelHeight =
+			(
+				bIsControllingCannon
+				? 245.0f
+				: 135.0f
+				) *
+			ScreenScale;
+
+
+		const float ControlPanelX =
+			Canvas->ClipX -
+			ControlPanelWidth -
+			40.0f *
+			ScreenScale;
+
+
+		const float ControlPanelY =
+			Canvas->ClipY -
+			ControlPanelHeight -
+			80.0f *
+			ScreenScale;
+
+
+		DrawRect(
+			FLinearColor(
+				0.0f,
+				0.0f,
+				0.0f,
+				0.62f
+			),
+			ControlPanelX,
+			ControlPanelY,
+			ControlPanelWidth,
+			ControlPanelHeight
+		);
+
+
+		const float ControlKeyX =
+			ControlPanelX +
+			22.0f *
+			ScreenScale;
+
+
+		const float ControlActionX =
+			ControlPanelX +
+			145.0f *
+			ScreenScale;
+
+
+		const float ControlHeaderY =
+			ControlPanelY +
+			18.0f *
+			ScreenScale;
+
+
+		const float ControlFirstLineY =
+			ControlPanelY +
+			52.0f *
+			ScreenScale;
+
+
+		const float ControlLineSpacing =
+			34.0f *
+			ScreenScale;
+
+
+		const float ControlHeaderScale =
+			1.00f *
+			ScreenScale;
+
+
+		const float ControlTextScale =
+			0.98f *
+			ScreenScale;
+
+
+		const FLinearColor KeyColor =
+			FLinearColor::White;
+
+
+		const FLinearColor ActionColor =
+			FLinearColor(
+				0.75f,
+				0.75f,
+				0.75f,
+				1.0f
+			);
+
+
+		// ========================================================
+		// CANNON CONTROLS
+		// ========================================================
+
+		if (bIsControllingCannon)
+		{
+			DrawHUDText(
+				TEXT("CANNON CONTROLS"),
+				ControlKeyX,
+				ControlHeaderY,
+				FLinearColor(
+					0.20f,
+					0.90f,
+					1.0f,
+					1.0f
+				),
+				ControlHeaderScale
+			);
+
+
+			// A / D
+			DrawHUDText(
+				TEXT("A / D"),
+				ControlKeyX,
+				ControlFirstLineY,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("ROTATE"),
+				ControlActionX,
+				ControlFirstLineY,
+				ActionColor,
+				ControlTextScale
+			);
+
+
+			// W / S
+			DrawHUDText(
+				TEXT("W / S"),
+				ControlKeyX,
+				ControlFirstLineY +
+				ControlLineSpacing,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("ELEVATE"),
+				ControlActionX,
+				ControlFirstLineY +
+				ControlLineSpacing,
+				ActionColor,
+				ControlTextScale
+			);
+
+
+			// Q / E
+			DrawHUDText(
+				TEXT("Q / E"),
+				ControlKeyX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				2.0f,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("POWER"),
+				ControlActionX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				2.0f,
+				ActionColor,
+				ControlTextScale
+			);
+
+
+			// Left Mouse Button
+			DrawHUDText(
+				TEXT("LMB"),
+				ControlKeyX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				3.0f,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("FIRE"),
+				ControlActionX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				3.0f,
+				ActionColor,
+				ControlTextScale
+			);
+
+
+			// F
+			DrawHUDText(
+				TEXT("F"),
+				ControlKeyX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				4.0f,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("EXIT CANNON"),
+				ControlActionX,
+				ControlFirstLineY +
+				ControlLineSpacing *
+				4.0f,
+				ActionColor,
+				ControlTextScale
+			);
+		}
+
+
+		// ========================================================
+		// PLAYER CONTROLS
+		// ========================================================
+
+		else
+		{
+			DrawHUDText(
+				TEXT("PLAYER CONTROLS"),
+				ControlKeyX,
+				ControlHeaderY,
+				FLinearColor(
+					0.20f,
+					0.90f,
+					1.0f,
+					1.0f
+				),
+				ControlHeaderScale
+			);
+
+
+			// WASD
+			DrawHUDText(
+				TEXT("WASD"),
+				ControlKeyX,
+				ControlFirstLineY,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("MOVE"),
+				ControlActionX,
+				ControlFirstLineY,
+				ActionColor,
+				ControlTextScale
+			);
+
+
+			// F
+			DrawHUDText(
+				TEXT("F"),
+				ControlKeyX,
+				ControlFirstLineY +
+				ControlLineSpacing,
+				KeyColor,
+				ControlTextScale
+			);
+
+			DrawHUDText(
+				TEXT("ENTER CANNON"),
+				ControlActionX,
+				ControlFirstLineY +
+				ControlLineSpacing,
+				ActionColor,
+				ControlTextScale
+			);
+		}
+
+
+		// 플레이 중에는 Result Panel 없음
 		return;
 	}
 
@@ -294,16 +595,12 @@ void AOrbitalHUD::DrawHUD()
 	// ============================================================
 
 	const float ResultPanelWidth =
-		340.0f *
+		500.0f *
 		ScreenScale;
 
-
-	// Retry 안내 한 줄을 추가했으므로
-	// 기존 80보다 조금 높임
 	const float ResultPanelHeight =
-		105.0f *
+		150.0f *
 		ScreenScale;
-
 
 	const float ResultPanelX =
 		(
@@ -312,33 +609,27 @@ void AOrbitalHUD::DrawHUD()
 			) *
 		0.5f;
 
-
 	const float ResultPanelY =
 		Canvas->ClipY *
-		0.17f;
-
+		0.15f;
 
 	const float ResultTextY =
 		ResultPanelY +
-		15.0f *
+		24.0f *
 		ScreenScale;
-
 
 	const float RetryTextY =
 		ResultPanelY +
-		66.0f *
+		98.0f *
 		ScreenScale;
-
 
 	const float ResultTextScale =
-		1.7f *
+		2.3f *
 		ScreenScale;
-
 
 	const float RetryTextScale =
-		0.62f *
+		1.0f *
 		ScreenScale;
-
 
 	// ============================================================
 	// STAGE CLEAR
@@ -414,8 +705,6 @@ void AOrbitalHUD::DrawHUD()
 
 	// ============================================================
 	// RETRY 안내
-	//
-	// CLEAR / FAILED 공통
 	// ============================================================
 
 	DrawCenteredHUDText(
