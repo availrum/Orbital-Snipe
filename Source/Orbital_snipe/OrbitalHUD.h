@@ -22,19 +22,31 @@ public:
 	virtual void DrawHUD() override;
 
 private:
-	// 게임 상태를 읽기 위해 참조
+	// 게임 상태를 읽기 위한 Actor 참조
 	AGravityManager* GravityManager = nullptr;
 	AOrbitalCannon* OrbitalCannon = nullptr;
 
-	// 필요한 Actor가 아직 연결되지 않았을 경우 다시 검색
+	// Actor 참조 검색
 	void FindGameplayActors();
 
-	// 공통 텍스트 그리기 함수
+	// 일반 HUD 텍스트 출력
 	void DrawHUDText(
 		const FString& Text,
 		float X,
 		float Y,
 		const FLinearColor& Color,
-		bool bLarge = false
+		float Scale = 1.0f
 	);
+
+	// 화면 중앙 기준 텍스트 출력
+	void DrawCenteredHUDText(
+		const FString& Text,
+		float CenterX,
+		float Y,
+		const FLinearColor& Color,
+		float Scale = 1.0f
+	);
+
+	// 점수에 천 단위 쉼표 추가
+	FString FormatScore(int32 Score) const;
 };
